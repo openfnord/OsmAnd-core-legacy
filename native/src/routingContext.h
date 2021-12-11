@@ -49,12 +49,12 @@ struct RoutingSubregionTile {
 			uint64_t y31 = o->pointsY[i];
 			uint64_t l = (((uint64_t)x31) << 31) + (uint64_t)y31;
 			SHARED_PTR<RouteSegment> segment = std::make_shared<RouteSegment>(o, i);
-			if (routes[l].get() == NULL) {
+			if (routes.find(l) == routes.end()) {
 				routes[l] = segment;
 			} else {
 				SHARED_PTR<RouteSegment> orig = routes[l];
 				int cnt = 0;
-				while (orig->nextLoaded.get() != NULL) {
+				while (orig->nextLoaded) {
 					orig = orig->nextLoaded;
 					cnt++;
 				}
@@ -139,7 +139,7 @@ struct RoutingContext {
 				for (; itr != tl->routes.end(); itr++) {
 					auto s = itr->second;
 					while (s) {
-						s->parentRoute.reset();
+						s->parentRoute = nullptr;
 						s->distanceFromStart = 0;
 						s->distanceToEnd = 0;
 						s = s->next;
@@ -287,14 +287,12 @@ struct RoutingContext {
 					if (config->directionPoints.count() > 0) {
 						// retrieve direction points for attach to routing
 						RouteSubregion& subregion = subregions[j]->subregion;
-						SkIRect rect =
-							SkIRect::MakeLTRB(subregion.left, subregion.top, subregion.right, subregion.bottom);
+						SkIRect rect = SkIRect::MakeLTRB(subregion.left, subregion.top, subregion.right, subregion.bottom);
 						config->directionPoints.query_in_box(rect, points);
-						uint32_t createType = subregion.routingIndex->findOrCreateRouteType(DirectionPoint_TAG,
-																							DirectionPoint_CREATE_TYPE);
+						uint32_t createType = subregion.routingIndex->findOrCreateRouteType(DirectionPoint_TAG, DirectionPoint_CREATE_TYPE);
 						for (SHARED_PTR<DirectionPoint>& d : points) {
 							d->types.clear();
-							for (std::pair<std::string, std::string> e : d->tags) {
+							for (std::pair<std::string, std::string>& e : d->tags) {
 								uint32_t type = subregion.routingIndex->searchRouteEncodingRule(e.first, e.second);
 								if (type != -1) {
 									d->types.push_back(type);
@@ -396,7 +394,7 @@ struct RoutingContext {
 						UNORDERED(map)<int64_t, SHARED_PTR<RouteSegment>>::iterator s = subregions[j]->routes.begin();
 						while (s != subregions[j]->routes.end()) {
 							SHARED_PTR<RouteSegment> seg = s->second;
-							while (seg.get() != NULL) {
+							while (seg) {
 								SHARED_PTR<RouteDataObject> ro = seg->road;
 								// excludeDuplications.insert(ro->id).second - true if it was inserted
 								if (!isExcluded(ro->id, j, subregions) && excludeDuplications.insert(ro->id).second) {
@@ -420,7 +418,7 @@ struct RoutingContext {
 	// void searchRouteRegion(SearchQuery* q, std::vector<RouteDataObject*>& list, RoutingIndex* rs, RouteSubregion*
 	// sub)
 	SHARED_PTR<RouteSegment> loadRouteSegment(int x31, int y31, bool reverseWaySearch) {
-		if (progress && progress.get()) {
+		if (progress) {
 			progress->timeToLoad.Start();
 		}
 		int z = config->zoomToLoad;
@@ -444,15 +442,15 @@ struct RoutingContext {
 			if (subregions[j]->isLoaded()) {
 				SHARED_PTR<RouteSegment> segment = subregions[j]->routes[l];
 				subregions[j]->access++;
-				while (segment.get() != NULL) {
+				while (segment) {
 					SHARED_PTR<RouteDataObject> ro = segment->road;
 					SHARED_PTR<RouteDataObject> toCmp =
 						excludeDuplications[calcRouteId(ro, segment->getSegmentStart())];
 					if (!isExcluded(ro->id, j, subregions) &&
-						(toCmp.get() == NULL || toCmp->pointsX.size() < ro->pointsX.size())) {
+						(!toCmp || toCmp->pointsX.size() < ro->pointsX.size())) {
 						excludeDuplications[calcRouteId(ro, segment->getSegmentStart())] = ro;
 						if (reverseWaySearch) {
-							if (segment->reverseSearch == NULL) {
+							if (!segment->reverseSearch) {
 								segment->reverseSearch = std::make_shared<RouteSegment>(ro, segment->getSegmentStart());
 								segment->reverseSearch->reverseSearch = segment;
 								segment->reverseSearch->nextLoaded = segment->nextLoaded;
@@ -466,7 +464,7 @@ struct RoutingContext {
 				}
 			}
 		}
-		if (progress && progress.get()) {
+		if (progress) {
 			progress->timeToLoad.Start();
 		}
 		return original;

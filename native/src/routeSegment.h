@@ -6,6 +6,9 @@
 #include "Logging.h"
 
 struct RouteSegment {
+    
+    // # Represents parent segment for Start & End segment
+    static inline SHARED_PTR<RouteSegment> null = std::make_shared<RouteSegment>(nullptr, 0, 1);
     // Route segment represents part (segment) of the road. 
 	// In our current data it's always length of 1: [X, X + 1] or [X - 1, X] 
     
@@ -24,7 +27,7 @@ struct RouteSegment {
     SHARED_PTR<RouteSegment> reverseSearch;
     
     // # Important for A*-search to distinguish whether segment was visited or not
-	// Initially all segments null and startSegment/endSegment.parentRoute = RouteSegment.NULL;
+	// Initially all segments null and startSegment/endSegment.parentRoute = RouteSegment::null;
 	// After iteration stores previous segment i.e. how it was reached from startSegment
     SHARED_PTR<RouteSegment> parentRoute;
     
@@ -72,9 +75,6 @@ struct RouteSegment {
         return false;
     }
     
-    inline SHARED_PTR<RouteSegment> getParentRoute();
-    inline bool isNull();
-    
     static SHARED_PTR<RouteSegment> initRouteSegment(SHARED_PTR<RouteSegment>& th, bool positiveDirection) {
         if(th->segmentStart == 0 && !positiveDirection) {
             return SHARED_PTR<RouteSegment>();
@@ -89,7 +89,7 @@ struct RouteSegment {
             if (positiveDirection == (th->segmentEnd > th->segmentStart)) {
                 return th;
             } else {
-                if (th->oppositeDirection.get() == nullptr) {
+                if (!th->oppositeDirection) {
                     th->oppositeDirection = std::make_shared<RouteSegment>(th->road, th->segmentStart,
                                                          th->segmentEnd > th->segmentStart ? (th->segmentStart - 1) : (th->segmentStart + 1));
                     th->oppositeDirection->oppositeDirection = th;
@@ -97,7 +97,10 @@ struct RouteSegment {
                 return th->oppositeDirection;
             }
         }
-        return nullptr;
+    }
+
+    SHARED_PTR<RouteSegment> getParentRoute() {
+        return parentRoute == RouteSegment::null ? nullptr : parentRoute;
     }
     
     RouteSegment()
@@ -140,14 +143,6 @@ struct RouteSegment {
         , distanceToEnd(0)
         , isFinalSegment(false) {
     }
-};
-
-inline bool RouteSegment::isNull() {
-    return parentRoute != nullptr && parentRoute->segmentStart == 0 && parentRoute->segmentEnd == 1 && parentRoute->road == nullptr;
-}
-
-inline SHARED_PTR<RouteSegment> RouteSegment::getParentRoute() {
-    return isNull() ? nullptr : parentRoute;
 };
 
 struct RouteSegmentPoint : RouteSegment {
