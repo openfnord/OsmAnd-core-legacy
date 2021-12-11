@@ -139,7 +139,7 @@ struct RoutingContext {
 				for (; itr != tl->routes.end(); itr++) {
 					auto s = itr->second;
 					while (s) {
-						s->parentRoute = nullptr;
+						s->parentRoute.reset();
 						s->distanceFromStart = 0;
 						s->distanceToEnd = 0;
 						s = s->next;
