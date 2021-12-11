@@ -8,7 +8,7 @@
 struct RouteSegment {
     
     // # Represents parent segment for Start & End segment
-    static inline SHARED_PTR<RouteSegment> null = std::make_shared<RouteSegment>(nullptr, 0, 1);
+    static inline SHARED_PTR<RouteSegment> breakSegment = std::make_shared<RouteSegment>(nullptr, 0, 1);
     // Route segment represents part (segment) of the road. 
 	// In our current data it's always length of 1: [X, X + 1] or [X - 1, X] 
     
@@ -27,7 +27,7 @@ struct RouteSegment {
     SHARED_PTR<RouteSegment> reverseSearch;
     
     // # Important for A*-search to distinguish whether segment was visited or not
-	// Initially all segments null and startSegment/endSegment.parentRoute = RouteSegment::null;
+	// Initially all segments null and startSegment/endSegment.parentRoute = RouteSegment::breakSegment;
 	// After iteration stores previous segment i.e. how it was reached from startSegment
     SHARED_PTR<RouteSegment> parentRoute;
     
@@ -100,7 +100,7 @@ struct RouteSegment {
     }
 
     SHARED_PTR<RouteSegment> getParentRoute() {
-        return parentRoute == RouteSegment::null ? nullptr : parentRoute;
+        return parentRoute == RouteSegment::breakSegment ? nullptr : parentRoute;
     }
     
     RouteSegment()

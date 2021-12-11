@@ -147,10 +147,10 @@ void initQueuesWithStartEnd(RoutingContext* ctx, SHARED_PTR<RouteSegment> start,
 	SHARED_PTR<RouteSegment> startNeg = initRouteSegment(ctx, start, false, false);
 	SHARED_PTR<RouteSegment> endPos = initRouteSegment(ctx, end, true, true);
 	SHARED_PTR<RouteSegment> endNeg = initRouteSegment(ctx, end, false, true);
-	startPos->parentRoute = RouteSegment::null;
-	startNeg->parentRoute = RouteSegment::null;
-	endPos->parentRoute = RouteSegment::null;
-	endNeg->parentRoute = RouteSegment::null;
+	startPos->parentRoute = RouteSegment::breakSegment;
+	startNeg->parentRoute = RouteSegment::breakSegment;
+	endPos->parentRoute = RouteSegment::breakSegment;
+	endNeg->parentRoute = RouteSegment::breakSegment;
 
 	// for start : f(start) = g(start) + h(start) = 0 + h(start) = h(start)
 	if (ctx->config->initialDirection > -180 && ctx->config->initialDirection < 180) {
