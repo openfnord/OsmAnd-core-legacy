@@ -69,10 +69,7 @@ struct RouteSegment {
     }
     
     bool isSegmentAttachedToStart() {
-        if (parentRoute != nullptr) {
-            return true;
-        }
-        return false;
+        return parentRoute != nullptr;
     }
     
     static SHARED_PTR<RouteSegment> initRouteSegment(SHARED_PTR<RouteSegment>& th, bool positiveDirection) {

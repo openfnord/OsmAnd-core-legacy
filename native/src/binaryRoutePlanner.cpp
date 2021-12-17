@@ -15,11 +15,11 @@ static const bool TRACE_ROUTING = false;
 // Check issue #8649
 static const double GPS_POSSIBLE_ERROR = 7;
 
-inline int roadPriorityComparator(float o1DistanceFromStart, float o1DistanceToEnd, float o2DistanceFromStart,
-								  float o2DistanceToEnd, float heuristicCoefficient) {
+inline int roadPriorityComparator(double o1DistanceFromStart, double o1DistanceToEnd, double o2DistanceFromStart,
+								  double o2DistanceToEnd, double heuristicCoefficient) {
 	// f(x) = g(x) + h(x)  --- g(x) - distanceFromStart, h(x) - distanceToEnd (not exact)
-	float f1 = o1DistanceFromStart + heuristicCoefficient * o1DistanceToEnd;
-	float f2 = o2DistanceFromStart + heuristicCoefficient * o2DistanceToEnd;
+	double f1 = o1DistanceFromStart + heuristicCoefficient * o1DistanceToEnd;
+	double f2 = o2DistanceFromStart + heuristicCoefficient * o2DistanceToEnd;
 	if (f1 == f2) {
 		return 0;
 	}
@@ -135,7 +135,7 @@ SHARED_PTR<RouteSegment> initRouteSegment(RoutingContext* ctx, SHARED_PTR<RouteS
 	} else if (segment->getSegmentStart() > 0 && positiveDirection) {
 		segment = loadSameSegment(ctx, segment, segment->getSegmentStart() - 1, reverseSearchWay);
 	}
-	if (segment == nullptr) {
+	if (!segment) {
 		return segment;
 	}
 	return RouteSegment::initRouteSegment(segment, positiveDirection);
@@ -699,7 +699,8 @@ SHARED_PTR<RouteSegment> processIntersections(RoutingContext* ctx, SEGMENTS_QUEU
 		if (currentSegment->getSegmentEnd() == roadIter->getSegmentStart() &&
 			roadIter->getRoad()->getId() == currentSegment->getRoad()->getId()) {
 			nextCurrentSegment = RouteSegment::initRouteSegment(roadIter, currentSegment->isPositive());
-			if (nextCurrentSegment == nullptr) {
+			if (!nextCurrentSegment) {
+                // end of route (-1 or length + 1)
 				directionAllowed = false;
 			} else {
 				if (nextCurrentSegment->isSegmentAttachedToStart()) {
@@ -980,13 +981,13 @@ bool processOneRoadIntersection(RoutingContext* ctx, bool reverseWaySearch, SEGM
 					// so we need to add segment back to the queue & reassign the parent (same as for
 					// next.getParentRoute() == null)
 					toAdd = true;
-					if (ctx->getHeuristicCoefficient() <= 1) {
-						OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,
-										  "! ALERT new faster path to a visited segment: %f < %f",
-										  (distFromStart + routeSegmentTime), visIt->distanceFromStart);
-						printRoad("next", next.get());
-						printRoad("visIt", visIt.get());
-					}
+//					if (ctx->getHeuristicCoefficient() <= 1) {
+//						OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,
+//										  "! ALERT new faster path to a visited segment: %f < %f",
+//										  (distFromStart + routeSegmentTime), visIt->distanceFromStart);
+//						printRoad("next", next.get());
+//						printRoad("visIt", visIt.get());
+//					}
 					// ??? It's not clear whether this block is needed or not ???
 					// All Test cases work with and without it
 					// visIt.setParentRoute(segment);
@@ -1018,7 +1019,7 @@ bool processOneRoadIntersection(RoutingContext* ctx, bool reverseWaySearch, SEGM
 vector<SHARED_PTR<RouteSegmentResult>> convertFinalSegmentToResults(RoutingContext* ctx,
 																	SHARED_PTR<RouteSegment>& finalSegment) {
 	vector<SHARED_PTR<RouteSegmentResult>> result;
-	if (finalSegment.get() != NULL) {
+	if (finalSegment) {
 		SHARED_PTR<RouteSegment> segment =
 			finalSegment->isReverseWaySearch() ? finalSegment->parentRoute : finalSegment->opposite;
 		while (segment && segment->getRoad() != nullptr) {
