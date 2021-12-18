@@ -54,6 +54,7 @@ struct RoutingSubregionTile {
 			} else {
 				SHARED_PTR<RouteSegment> orig = routes[l];
 				int cnt = 0;
+                // TODO: Memory leak!
 				while (orig->nextLoaded) {
 					orig = orig->nextLoaded;
 					cnt++;
@@ -452,6 +453,7 @@ struct RoutingContext {
 						if (reverseWaySearch) {
 							if (!segment->reverseSearch) {
 								segment->reverseSearch = std::make_shared<RouteSegment>(ro, segment->getSegmentStart());
+                                // TODO: Memory leak!
 								segment->reverseSearch->reverseSearch = segment;
 								segment->reverseSearch->nextLoaded = segment->nextLoaded;
 							}

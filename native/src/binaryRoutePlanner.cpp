@@ -7,6 +7,8 @@
 #include "Logging.h"
 #include "binaryRead.h"
 #include "routingContext.h"
+#include "CommonCollections.h"
+#include "commonOsmAndCore.h"
 
 //	static bool PRINT_TO_CONSOLE_ROUTE_INFORMATION_TO_TEST = true;
 
@@ -211,19 +213,17 @@ bool checkIfGraphIsEmpty(RoutingContext* ctx, bool allowDirection, bool reverseW
 					neg->distanceToEnd = estimatedDist;
 					graphSegments.push(neg);
 				}
-
-				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Reiterate point with new start/destination ");
-				printRoad("Reiterate point ", next);
-				break;
+                if (!graphSegments.empty()) {
+                    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Reiterate point with new start/destination ");
+                    printRoad("Reiterate point ", next);
+                    break;
+                }
 			}
 			pnt->others.shrink_to_fit();
-			if (graphSegments.size() == 0) {
-				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Route is not found to selected target point.");
-				return true;
-			}
+            return graphSegments.empty();
 		}
 	}
-	return false;
+    return false;
 }
 
 bool containsKey(VISITED_MAP& visited, int64_t routePointId) {
@@ -416,11 +416,12 @@ bool checkViaRestrictions(SHARED_PTR<RouteSegment>& from, SHARED_PTR<RouteSegmen
 }
 
 SHARED_PTR<RouteSegment> getParentDiffId(SHARED_PTR<RouteSegment>& s) {
-	while (s->getParentRoute() && s->getParentRoute()->getRoad() &&
-		   s->getParentRoute()->getRoad()->id == s->getRoad()->id) {
-		s = s->getParentRoute();
+    auto res = s;
+	while (res->getParentRoute() && res->getParentRoute()->getRoad() &&
+		   res->getParentRoute()->getRoad()->id == s->getRoad()->id) {
+		res = res->getParentRoute();
 	}
-	return s->getParentRoute();
+	return res->getParentRoute();
 }
 
 bool checkIfOppositeSegmentWasVisited(bool reverseWaySearch, SEGMENTS_QUEUE& graphSegments,
@@ -513,13 +514,13 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 		// 2. check if segment was already visited in opposite direction
 		// We check before we calculate segmentTime (to not calculate it twice with opposite and calculate turns
 		// onto each segment).
-//		bool alreadyVisited =
-//			checkIfOppositeSegmentWasVisited(reverseWaySearch, graphSegments, currentSegment, oppositeSegments);
-//		if (alreadyVisited) {
-			// we don't stop here in order to allow improve found *potential* final segment - test case on short route
-			// directionAllowed = false;
-			// break;
-//		}
+		bool alreadyVisited =
+			checkIfOppositeSegmentWasVisited(reverseWaySearch, graphSegments, currentSegment, oppositeSegments);
+		if (alreadyVisited) {
+//			 we don't stop here in order to allow improve found *potential* final segment - test case on short route
+//			 directionAllowed = false;
+//			 break;
+		}
 
 		// 3. upload segment itself to visited segments
 		int64_t nextPntId = calculateRoutePointId(currentSegment);
@@ -663,7 +664,7 @@ bool proccessRestrictions(RoutingContext* ctx, SHARED_PTR<RouteSegment>& segment
 	if (!ctx->config->router->restrictionsAware()) {
 		return false;
 	}
-	SHARED_PTR<RouteDataObject>& road = segment->getRoad();
+	SHARED_PTR<RouteDataObject> road = segment->getRoad();
 	SHARED_PTR<RouteSegment> parent = getParentDiffId(segment);
 
 	if (!reverseWay && road->restrictions.size() == 0 &&
@@ -728,7 +729,7 @@ SHARED_PTR<RouteSegment> processIntersections(RoutingContext* ctx, SEGMENTS_QUEU
 	}
 
 	// find restrictions and iterator
-	vector<SHARED_PTR<RouteSegment>>::iterator nextIterator;
+	auto nextIterator = ctx->segmentsToVisitPrescripted.end();
 	bool thereAreRestrictions = proccessRestrictions(ctx, currentSegment, connectedNextSegment, reverseWaySearch);
 	if (thereAreRestrictions) {
 		nextIterator = ctx->segmentsToVisitPrescripted.begin();
@@ -739,7 +740,7 @@ SHARED_PTR<RouteSegment> processIntersections(RoutingContext* ctx, SEGMENTS_QUEU
 
 	// Calculate possible turns to put into priority queue
 	SHARED_PTR<RouteSegment> next = connectedNextSegment;
-	bool hasNext = !thereAreRestrictions ? next != nullptr : nextIterator != ctx->segmentsToVisitPrescripted.end();
+    bool hasNext = thereAreRestrictions ? nextIterator != ctx->segmentsToVisitPrescripted.end() && !is_last_pos(nextIterator, ctx->segmentsToVisitPrescripted) : next != nullptr;
 	while (hasNext) {
 		if (thereAreRestrictions) {
 			next = *nextIterator;
@@ -762,7 +763,7 @@ SHARED_PTR<RouteSegment> processIntersections(RoutingContext* ctx, SEGMENTS_QUEU
 			hasNext = next != nullptr;
 		} else {
 			nextIterator++;
-			hasNext = nextIterator != ctx->segmentsToVisitPrescripted.end();
+            hasNext = !is_last_pos(nextIterator, ctx->segmentsToVisitPrescripted);
 		}
 	}
 	if (nextCurrentSegment == nullptr && directionAllowed) {
@@ -956,9 +957,10 @@ bool processOneRoadIntersection(RoutingContext* ctx, bool reverseWaySearch, SEGM
 			return false;
 		}
 		double distFromStart = obstaclesTime + segment->distanceFromStart;
-		const auto visIt = visitedSegments[calculateRoutePointId(next)];
+		const auto visIt = visitedSegments.find(calculateRoutePointId(next));
 		bool toAdd = true;
-		if (visIt) {
+		if (visIt != visitedSegments.end() && visIt->second) {
+            const auto& visitedSeg = visIt->second;
 			if (TRACE_ROUTING) {
 				printRoad("  >?", visitedSegments.at(calculateRoutePointId(next)));
 			}
@@ -968,11 +970,10 @@ bool processOneRoadIntersection(RoutingContext* ctx, bool reverseWaySearch, SEGM
 			// 1. We underestimate distanceToEnd - wrong h() of A* (heuristic > 1)
 			// 2. We don't process small segments 1 by 1 from the queue but the whole road,
 			//  and it could be that deviation from the road is faster than following the whole road itself!
-			if (distFromStart < visIt->distanceFromStart) {
-				double routeSegmentTime = calculateRouteSegmentTime(
-					ctx, reverseWaySearch, visIt);
+			if (distFromStart < visitedSeg->distanceFromStart) {
+				double routeSegmentTime = calculateRouteSegmentTime(ctx, reverseWaySearch, visitedSeg);
 				// we need to properly compare @distanceFromStart VISITED and NON-VISITED segment
-				if (distFromStart + routeSegmentTime < visIt->distanceFromStart) {
+				if (distFromStart + routeSegmentTime < visitedSeg->distanceFromStart) {
 					// Here it's not very legitimate action cause in theory we need to go up to the final segment in the
 					// queue & decrease final time But it's compensated by chain reaction cause next.distanceFromStart <
 					// finalSegment.distanceFromStart and revisiting all segments

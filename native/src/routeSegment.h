@@ -89,6 +89,7 @@ struct RouteSegment {
                 if (!th->oppositeDirection) {
                     th->oppositeDirection = std::make_shared<RouteSegment>(th->road, th->segmentStart,
                                                          th->segmentEnd > th->segmentStart ? (th->segmentStart - 1) : (th->segmentStart + 1));
+                    // TODO: Memory leak!
                     th->oppositeDirection->oppositeDirection = th;
                 }
                 return th->oppositeDirection;
