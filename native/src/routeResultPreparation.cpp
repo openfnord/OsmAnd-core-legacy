@@ -173,16 +173,16 @@ void attachRoadSegments(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResul
     if (!rr->getPreAttachedRoutes(pointInd).empty()) {
         const auto& list = rr->getPreAttachedRoutes(pointInd);
         for (auto r : list) {
-            auto rs = std::make_shared<RouteSegment>(r->object, r->getStartPointIndex(), r->getEndPointIndex());
+            auto rs = std::make_shared<RouteSegment>(r->object, r->getStartPointIndex(), r->getEndPointIndex(), ctx->routeSegmentStructure);
             attachSegments(ctx, rs, road, rr, previousRoadId, pointInd, prevL, nextL);
         }
     } else {
         auto rt = ctx->loadRouteSegment(road->pointsX[pointInd], road->pointsY[pointInd]);
         if (rt) {
-            auto rs = rt->next;
+            auto rs = rt->getNext();
             while (rs) {
                 attachSegments(ctx, rs, road, rr, previousRoadId, pointInd, prevL, nextL);
-                rs = rs->next;
+                rs = rs->getNext();
             }
         }
     }
@@ -1375,23 +1375,23 @@ vector<SHARED_PTR<RouteSegmentResult> > convertFinalSegmentToResults(RoutingCont
 
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Routing calculated time distance %f", finalSegment->distanceFromStart);
         // Get results from opposite direction roads
-        SHARED_PTR<RouteSegment> segment = finalSegment->reverseWaySearch ? finalSegment->getParentRoute() : finalSegment->opposite;
+        SHARED_PTR<RouteSegment> segment = finalSegment->reverseWaySearch ? finalSegment->getParentRouteOrNull() : finalSegment->opposite;
         while (segment.get() != NULL && segment->getRoad() != nullptr) {
             auto res = std::make_shared<RouteSegmentResult>(segment->road, segment->getSegmentEnd(), segment->getSegmentStart());
-            float parentRoutingTime = segment->getParentRoute() != nullptr ? segment->getParentRoute()->distanceFromStart : 0;
+            float parentRoutingTime = segment->getParentRouteOrNull() != nullptr ? segment->getParentRouteOrNull()->distanceFromStart : 0;
             res->routingTime = segment->distanceFromStart - parentRoutingTime;
-            segment = segment->getParentRoute();
+            segment = segment->getParentRouteOrNull();
             addRouteSegmentToResult(ctx, result, res, false);
         }
         // reverse it just to attach good direction roads
         std::reverse(result.begin(), result.end());
 
-        segment = finalSegment->reverseWaySearch ? finalSegment->opposite : finalSegment->getParentRoute();
+        segment = finalSegment->reverseWaySearch ? finalSegment->opposite : finalSegment->getParentRouteOrNull();
         while (segment.get() != NULL && segment->getRoad() != nullptr) {
             auto res = std::make_shared<RouteSegmentResult>(segment->road, segment->getSegmentStart(), segment->getSegmentEnd());
-            float parentRoutingTime = segment->getParentRoute() != nullptr ? segment->getParentRoute()->distanceFromStart : 0;
+            float parentRoutingTime = segment->getParentRouteOrNull() != nullptr ? segment->getParentRouteOrNull()->distanceFromStart : 0;
             res->routingTime = segment->distanceFromStart - parentRoutingTime;
-            segment = segment->getParentRoute();
+            segment = segment->getParentRouteOrNull();
             // happens in smart recalculation
             addRouteSegmentToResult(ctx, result, res, true);
         }

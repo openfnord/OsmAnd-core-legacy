@@ -42,24 +42,21 @@ struct RoutingSubregionTile {
 
 	long getSize() { return size + routes.size() * sizeof(std::pair<int64_t, SHARED_PTR<RouteSegment>>); }
 
-	void add(SHARED_PTR<RouteDataObject>& o) {
+	void add(SHARED_PTR<RouteDataObject>& o, SHARED_PTR<RouteSegmentStructure>& segmentStructure) {
 		size += o->getSize() + sizeof(RouteSegment) * o->pointsX.size();
 		for (uint i = 0; i < o->pointsX.size(); i++) {
 			uint64_t x31 = o->pointsX[i];
 			uint64_t y31 = o->pointsY[i];
 			uint64_t l = (((uint64_t)x31) << 31) + (uint64_t)y31;
-			SHARED_PTR<RouteSegment> segment = std::make_shared<RouteSegment>(o, i);
+			SHARED_PTR<RouteSegment> segment = std::make_shared<RouteSegment>(o, i, segmentStructure);
 			if (routes.find(l) == routes.end()) {
 				routes[l] = segment;
 			} else {
 				SHARED_PTR<RouteSegment> orig = routes[l];
-				int cnt = 0;
-                // TODO: Memory leak!
-				while (orig->nextLoaded) {
-					orig = orig->nextLoaded;
-					cnt++;
+				while (orig->getNextLoaded()) {
+					orig = orig->getNextLoaded();
 				}
-				orig->nextLoaded = segment;
+				orig->setNextLoaded(segment);
 			}
 		}
 	}
@@ -118,6 +115,8 @@ struct RoutingContext {
 
 	MAP_SUBREGION_TILES subregionTiles;
 	UNORDERED(map)<int64_t, std::vector<SHARED_PTR<RoutingSubregionTile>>> indexedSubregions;
+    
+    SHARED_PTR<RouteSegmentStructure> routeSegmentStructure;
 
 	RoutingContext(RoutingContext* cp) {
 		this->config = cp->config;
@@ -130,24 +129,26 @@ struct RoutingContext {
 		this->basemap = cp->basemap;
 		this->geocoding = cp->geocoding;
 		this->progress = std::make_shared<RouteCalculationProgress>();
+        this->routeSegmentStructure = cp->routeSegmentStructure;
+        // TODO: This code does nothing in Android because it iterates over this->subregionTiles which is always empty, clarify!
 		// copy local data and clear caches
-		auto it = cp->subregionTiles.begin();
-		for (; it != cp->subregionTiles.end(); it++) {
-			auto tl = it->second;
-			if (tl->isLoaded()) {
-				subregionTiles[it->first] = tl;
-				auto itr = tl->routes.begin();
-				for (; itr != tl->routes.end(); itr++) {
-					auto s = itr->second;
-					while (s) {
-						s->parentRoute.reset();
-						s->distanceFromStart = 0;
-						s->distanceToEnd = 0;
-						s = s->next;
-					}
-				}
-			}
-		}
+//		auto it = cp->subregionTiles.begin();
+//		for (; it != cp->subregionTiles.end(); it++) {
+//			auto tl = it->second;
+//			if (tl->isLoaded()) {
+//				subregionTiles[it->first] = tl;
+//				auto itr = tl->routes.begin();
+//				for (; itr != tl->routes.end(); itr++) {
+//					auto s = itr->second;
+//					while (s) {
+//						s->setParentRoute(nullptr);
+//						s->distanceFromStart = 0;
+//						s->distanceToEnd = 0;
+//						s = s->getNext();
+//					}
+//				}
+//			}
+//		}
 	}
 
 	RoutingContext(SHARED_PTR<RoutingConfiguration> config,
@@ -158,12 +159,17 @@ struct RoutingContext {
 		  startTransportStop(false),
 		  targetTransportStop(false),
 		  publicTransport(false),
-		  geocoding(false),
 		  conditionalTime(0),
 		  progress(new RouteCalculationProgress()),
-		  precalcRoute(new PrecalculatedRouteDirection()) {
+		  precalcRoute(new PrecalculatedRouteDirection()),
+          geocoding(false),
+          routeSegmentStructure(new RouteSegmentStructure()) {
 		this->basemap = RouteCalculationMode::BASE == calcMode;
 	}
+    
+    ~RoutingContext() {
+        routeSegmentStructure.reset();
+    }
 
 	void unloadAllData(RoutingContext* except = NULL) {
 		auto it = subregionTiles.begin();
@@ -321,7 +327,7 @@ struct RoutingContext {
 							if (acceptLine(o)) {
 								if (excludedIds.find(o->getId()) == excludedIds.end()) {
 									connectPoint(subregions[j], o, points);
-									subregions[j]->add(o);
+									subregions[j]->add(o, routeSegmentStructure);
 								}
 							}
 							if (o->getId() > 0) {
@@ -401,7 +407,7 @@ struct RoutingContext {
 								if (!isExcluded(ro->id, j, subregions) && excludeDuplications.insert(ro->id).second) {
 									dataObjects.push_back(ro);
 								}
-								seg = seg->next;
+								seg = seg->getNext();
 							}
 							s++;
 						}
@@ -451,18 +457,17 @@ struct RoutingContext {
 						(!toCmp || toCmp->pointsX.size() < ro->pointsX.size())) {
 						excludeDuplications[calcRouteId(ro, segment->getSegmentStart())] = ro;
 						if (reverseWaySearch) {
-							if (!segment->reverseSearch) {
-								segment->reverseSearch = std::make_shared<RouteSegment>(ro, segment->getSegmentStart());
-                                // TODO: Memory leak!
-								segment->reverseSearch->reverseSearch = segment;
-								segment->reverseSearch->nextLoaded = segment->nextLoaded;
+							if (!segment->getReverseSearch()) {
+								segment->setReverseSearch(std::make_shared<RouteSegment>(ro, segment->getSegmentStart(), routeSegmentStructure));
+								segment->getReverseSearch()->setReverseSearch(segment);
+								segment->getReverseSearch()->setNextLoaded(segment->getNextLoaded());
 							}
-							segment = segment->reverseSearch;
+							segment = segment->getReverseSearch();
 						}
-						segment->next = original;
+						segment->setNext(original);
 						original = segment;
 					}
-					segment = segment->nextLoaded;
+					segment = segment->getNextLoaded();
 				}
 			}
 		}

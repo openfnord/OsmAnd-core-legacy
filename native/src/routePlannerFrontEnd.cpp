@@ -31,9 +31,9 @@ SHARED_PTR<RouteSegment> RoutePlannerFrontEnd::getRecalculationEnd(RoutingContex
 			SHARED_PTR<RouteSegment> previous;
 			for (int i = 0; i <= rlist.size() - 1; i++) {
 				auto rr = rlist[i];
-				SHARED_PTR<RouteSegment> segment = std::make_shared<RouteSegment>(rr->object, rr->getStartPointIndex(), rr->getEndPointIndex());
+				SHARED_PTR<RouteSegment> segment = std::make_shared<RouteSegment>(rr->object, rr->getStartPointIndex(), rr->getEndPointIndex(), ctx->routeSegmentStructure);
 				if (previous) {
-					previous->parentRoute = segment;
+					previous->setParentRoute(segment);
 				} else {
 					recalculationEnd = segment;
 				}
@@ -160,8 +160,8 @@ vector<SHARED_PTR<RouteSegmentResult>> runRouting(RoutingContext* ctx, SHARED_PT
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[Native] use precalculated route");
 		SHARED_PTR<RouteSegment> current = recalculationEnd;
 
-		while (current->getParentRoute()) {
-			SHARED_PTR<RouteSegment> pr = current->getParentRoute();
+		while (current->getParentRouteOrNull()) {
+			SHARED_PTR<RouteSegment> pr = current->getParentRouteOrNull();
 			auto segmentResult = std::make_shared<RouteSegmentResult>(pr->road, pr->getSegmentEnd(), pr->getSegmentStart());
 			result.push_back(segmentResult);
 			current = pr;
@@ -392,7 +392,7 @@ mainLoop:
 	}
 	start->routeToTarget.shrink_to_fit();
 	SHARED_PTR<RouteSegmentResult>& res = start->routeToTarget[segmendInd];
-	next->pnt = std::make_shared<RouteSegmentPoint>(res->object, res->getEndPointIndex());
+	next->pnt = std::make_shared<RouteSegmentPoint>(res->object, res->getEndPointIndex(), gctx->ctx->routeSegmentStructure);
 	return true;
 }
 
@@ -577,8 +577,8 @@ bool RoutePlannerFrontEnd::findGpxRouteSegment(SHARED_PTR<GpxRouteApproximation>
 	vector<SHARED_PTR<RouteSegmentResult>> res;
 	bool routeIsCorrect = false;
 	if (start->pnt && target->pnt) {
-		start->pnt = std::make_shared<RouteSegmentPoint>(start->pnt);
-		target->pnt = std::make_shared<RouteSegmentPoint>(target->pnt);
+		start->pnt = std::make_shared<RouteSegmentPoint>(start->pnt, gctx->ctx->routeSegmentStructure);
+		target->pnt = std::make_shared<RouteSegmentPoint>(target->pnt, gctx->ctx->routeSegmentStructure);
 		gctx->routeDistCalculations += (target->cumDist - start->cumDist);
 		gctx->routeCalculations++;
 		res = searchRouteInternalPrepare(gctx->ctx, start->pnt, target->pnt, nullptr);

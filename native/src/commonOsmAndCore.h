@@ -367,12 +367,6 @@ struct FoundMapDataObject {
 	}
 };
 
-template <typename Iter, typename Cont>
-bool is_last_pos(Iter iter, const Cont& cont)
-{
-    return (iter != cont.end()) && (iter + 1 == cont.end());
-}
-
 void deleteObjects(std::vector<FoundMapDataObject>& v);
 
 int get31TileNumberX(double longitude);
