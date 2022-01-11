@@ -115,8 +115,8 @@ struct RoutingContext {
 
 	MAP_SUBREGION_TILES subregionTiles;
 	UNORDERED(map)<int64_t, std::vector<SHARED_PTR<RoutingSubregionTile>>> indexedSubregions;
-    
-    SHARED_PTR<RouteSegmentStructure> routeSegmentStructure;
+	
+	SHARED_PTR<RouteSegmentStructure> routeSegmentStructure;
 
 	RoutingContext(RoutingContext* cp) {
 		this->config = cp->config;
@@ -129,7 +129,7 @@ struct RoutingContext {
 		this->basemap = cp->basemap;
 		this->geocoding = cp->geocoding;
 		this->progress = std::make_shared<RouteCalculationProgress>();
-        this->routeSegmentStructure = cp->routeSegmentStructure;
+		this->routeSegmentStructure = cp->routeSegmentStructure;
         // TODO: This code does nothing in Android because it iterates over this->subregionTiles which is always empty, clarify!
 		// copy local data and clear caches
 //		auto it = cp->subregionTiles.begin();
@@ -161,15 +161,11 @@ struct RoutingContext {
 		  publicTransport(false),
 		  conditionalTime(0),
 		  progress(new RouteCalculationProgress()),
-		  precalcRoute(new PrecalculatedRouteDirection()),
-          geocoding(false),
-          routeSegmentStructure(new RouteSegmentStructure()) {
+		precalcRoute(new PrecalculatedRouteDirection()),
+		geocoding(false),
+		routeSegmentStructure(new RouteSegmentStructure()) {
 		this->basemap = RouteCalculationMode::BASE == calcMode;
 	}
-    
-    ~RoutingContext() {
-        routeSegmentStructure.reset();
-    }
 
 	void unloadAllData(RoutingContext* except = NULL) {
 		auto it = subregionTiles.begin();

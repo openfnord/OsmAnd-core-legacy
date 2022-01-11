@@ -9,73 +9,73 @@ struct RouteSegment;
 
 struct RouteSegmentStructure {
 public:
-    RouteSegmentStructure() {}
-    ~RouteSegmentStructure() {}
-    
-    void setNext(const RouteSegment *key, const SHARED_PTR<RouteSegment> value) {
-        nextMapping[key] = value;
-    }
-    
-    void setNextLoaded(const RouteSegment *key, const SHARED_PTR<RouteSegment> value) {
-        nextLoadedMapping[key] = value;
-    }
-    
-    void setOppositeDirection(const RouteSegment *key, const SHARED_PTR<RouteSegment> value) {
-        oppositeDirectionMapping[key] = value;
-    }
-    
-    void setReverseSearch(const RouteSegment *key, const SHARED_PTR<RouteSegment> value) {
-        reverseSearchMapping[key] = value;
-    }
-    
-    void setParentRoute(const RouteSegment *key, const SHARED_PTR<RouteSegment> value) {
-        parentRouteMapping[key] = value;
-    }
-    
-    void setOpposite(const RouteSegment *key, const SHARED_PTR<RouteSegment> value) {
-        oppositeMapping[key] = value;
-    }
-    
-    SHARED_PTR<RouteSegment> getNext(const RouteSegment *key) {
-        return nextMapping[key];
-    }
-    
-    SHARED_PTR<RouteSegment> getNextLoaded(const RouteSegment *key) {
-        return nextLoadedMapping[key];
-    }
-    
-    SHARED_PTR<RouteSegment> getOppositeDirection(const RouteSegment *key) {
-        return oppositeDirectionMapping[key];
-    }
-    
-    SHARED_PTR<RouteSegment> getReverseSearch(const RouteSegment *key) {
-        return reverseSearchMapping[key];
-    }
-    
-    SHARED_PTR<RouteSegment> getParentRoute(const RouteSegment *key) {
-        return parentRouteMapping[key];
-    }
-    
-    SHARED_PTR<RouteSegment> getOpposite(const RouteSegment *key) {
-        return oppositeMapping[key];
-    }
-    
-    void clearData(const RouteSegment *key) {
-        nextMapping.erase(key);
-        nextLoadedMapping.erase(key);
-        oppositeDirectionMapping.erase(key);
-        reverseSearchMapping.erase(key);
-        parentRouteMapping.erase(key);
-        oppositeMapping.erase(key);
-    }
-    
+	RouteSegmentStructure() {}
+	~RouteSegmentStructure() {}
+	
+	void setNext(const RouteSegment *key, const SHARED_PTR<RouteSegment> value) {
+		nextMapping[key] = value;
+	}
+	
+	void setNextLoaded(const RouteSegment *key, const SHARED_PTR<RouteSegment> value) {
+		nextLoadedMapping[key] = value;
+	}
+	
+	void setOppositeDirection(const RouteSegment *key, const SHARED_PTR<RouteSegment> value) {
+		oppositeDirectionMapping[key] = value;
+	}
+	
+	void setReverseSearch(const RouteSegment *key, const SHARED_PTR<RouteSegment> value) {
+		reverseSearchMapping[key] = value;
+	}
+	
+	void setParentRoute(const RouteSegment *key, const SHARED_PTR<RouteSegment> value) {
+		parentRouteMapping[key] = value;
+	}
+	
+	void setOpposite(const RouteSegment *key, const SHARED_PTR<RouteSegment> value) {
+		oppositeMapping[key] = value;
+	}
+	
+	SHARED_PTR<RouteSegment> getNext(const RouteSegment *key) {
+		return nextMapping[key];
+	}
+	
+	SHARED_PTR<RouteSegment> getNextLoaded(const RouteSegment *key) {
+		return nextLoadedMapping[key];
+	}
+	
+	SHARED_PTR<RouteSegment> getOppositeDirection(const RouteSegment *key) {
+		return oppositeDirectionMapping[key];
+	}
+	
+	SHARED_PTR<RouteSegment> getReverseSearch(const RouteSegment *key) {
+		return reverseSearchMapping[key];
+	}
+	
+	SHARED_PTR<RouteSegment> getParentRoute(const RouteSegment *key) {
+		return parentRouteMapping[key];
+	}
+	
+	SHARED_PTR<RouteSegment> getOpposite(const RouteSegment *key) {
+		return oppositeMapping[key];
+	}
+	
+	void clearData(const RouteSegment *key) {
+		nextMapping.erase(key);
+		nextLoadedMapping.erase(key);
+		oppositeDirectionMapping.erase(key);
+		reverseSearchMapping.erase(key);
+		parentRouteMapping.erase(key);
+		oppositeMapping.erase(key);
+	}
+	
 private:
-    UNORDERED_map<const RouteSegment *, SHARED_PTR<RouteSegment>> nextMapping;
-    UNORDERED_map<const RouteSegment *, SHARED_PTR<RouteSegment>> nextLoadedMapping;
-    UNORDERED_map<const RouteSegment *, SHARED_PTR<RouteSegment>> oppositeDirectionMapping;
-    UNORDERED_map<const RouteSegment *, SHARED_PTR<RouteSegment>> reverseSearchMapping;
-    UNORDERED_map<const RouteSegment *, SHARED_PTR<RouteSegment>> parentRouteMapping;
-    UNORDERED_map<const RouteSegment *, SHARED_PTR<RouteSegment>> oppositeMapping;
+	UNORDERED_map<const RouteSegment *, SHARED_PTR<RouteSegment>> nextMapping;
+	UNORDERED_map<const RouteSegment *, SHARED_PTR<RouteSegment>> nextLoadedMapping;
+	UNORDERED_map<const RouteSegment *, SHARED_PTR<RouteSegment>> oppositeDirectionMapping;
+	UNORDERED_map<const RouteSegment *, SHARED_PTR<RouteSegment>> reverseSearchMapping;
+	UNORDERED_map<const RouteSegment *, SHARED_PTR<RouteSegment>> parentRouteMapping;
+	UNORDERED_map<const RouteSegment *, SHARED_PTR<RouteSegment>> oppositeMapping;
 };
 
 struct RouteSegment {
@@ -151,29 +151,29 @@ struct RouteSegment {
         return getParentRoute() != nullptr;
     }
     
-    static SHARED_PTR<RouteSegment> initRouteSegment(SHARED_PTR<RouteSegment>& th, bool positiveDirection, SHARED_PTR<RouteSegmentStructure> &segmentStructure) {
-        if(th->segmentStart == 0 && !positiveDirection) {
-            return SHARED_PTR<RouteSegment>();
-        }
-        if(th->segmentStart == th->road->getPointsLength() - 1 && positiveDirection) {
-            return SHARED_PTR<RouteSegment>();
-        }
-
-        if (th->segmentStart == th->segmentEnd) {
-            throw std::invalid_argument("segmentStart or segmentEnd");
-        } else {
-            if (positiveDirection == (th->segmentEnd > th->segmentStart)) {
-                return th;
-            } else {
-                if (!th->getOppositeDirection()) {
-                    th->setOppositeDirection(std::make_shared<RouteSegment>(th->road, th->segmentStart,
-                                                         th->segmentEnd > th->segmentStart ? (th->segmentStart - 1) : (th->segmentStart + 1), segmentStructure));
-                    th->getOppositeDirection()->setOppositeDirection(th);
-                }
-                return th->getOppositeDirection();
-            }
-        }
-    }
+	static SHARED_PTR<RouteSegment> initRouteSegment(SHARED_PTR<RouteSegment>& th, bool positiveDirection, SHARED_PTR<RouteSegmentStructure> &segmentStructure) {
+		if(th->segmentStart == 0 && !positiveDirection) {
+			return SHARED_PTR<RouteSegment>();
+		}
+		if(th->segmentStart == th->road->getPointsLength() - 1 && positiveDirection) {
+			return SHARED_PTR<RouteSegment>();
+		}
+		
+		if (th->segmentStart == th->segmentEnd) {
+			throw std::invalid_argument("segmentStart or segmentEnd");
+		} else {
+			if (positiveDirection == (th->segmentEnd > th->segmentStart)) {
+				return th;
+			} else {
+				if (!th->getOppositeDirection()) {
+					th->setOppositeDirection(std::make_shared<RouteSegment>(th->road, th->segmentStart,
+																			th->segmentEnd > th->segmentStart ? (th->segmentStart - 1) : (th->segmentStart + 1), segmentStructure));
+					th->getOppositeDirection()->setOppositeDirection(th);
+				}
+				return th->getOppositeDirection();
+			}
+		}
+	}
 
     SHARED_PTR<RouteSegment> getParentRouteOrNull() {
         return getParentRoute() == RouteSegment::breakSegment ? nullptr : getParentRoute();
@@ -211,78 +211,78 @@ struct RouteSegment {
         , isFinalSegment(false) {
     }
     
-    ~RouteSegment() {
-        if (!segmentStructure.expired())
-            segmentStructure.lock()->clearData(this);
-    }
-    
-    SHARED_PTR<RouteSegment> getNext() {
-        if (!segmentStructure.expired())
-            return segmentStructure.lock()->getNext(this);
-        return nullptr;
-    }
-    
-    SHARED_PTR<RouteSegment> getNextLoaded() {
-        if (!segmentStructure.expired())
-            return segmentStructure.lock()->getNextLoaded(this);
-        return nullptr;
-    }
-    
-    SHARED_PTR<RouteSegment> getOppositeDirection() {
-        if (!segmentStructure.expired())
-            return segmentStructure.lock()->getOppositeDirection(this);
-        return nullptr;
-    }
-    
-    SHARED_PTR<RouteSegment> getReverseSearch() {
-        if (!segmentStructure.expired())
-            return segmentStructure.lock()->getReverseSearch(this);
-        return nullptr;
-    }
-    
-    SHARED_PTR<RouteSegment> getParentRoute() {
-        if (!segmentStructure.expired())
-            return segmentStructure.lock()->getParentRoute(this);
-        return nullptr;
-    }
-    
-    SHARED_PTR<RouteSegment> getOpposite() {
-        if (!segmentStructure.expired())
-            return segmentStructure.lock()->getOpposite(this);
-        return nullptr;
-    }
-    
-    void setNext(SHARED_PTR<RouteSegment> value) {
-        if (!segmentStructure.expired())
-            segmentStructure.lock()->setNext(this, value);
-    }
-    
-    void setNextLoaded(SHARED_PTR<RouteSegment> value) {
-        if (!segmentStructure.expired())
-            segmentStructure.lock()->setNextLoaded(this, value);
-    }
-    
-    void setOppositeDirection(SHARED_PTR<RouteSegment> value) {
-        if (!segmentStructure.expired())
-            segmentStructure.lock()->setOppositeDirection(this, value);
-    }
-    
-    void setReverseSearch(SHARED_PTR<RouteSegment> value) {
-        if (!segmentStructure.expired())
-            segmentStructure.lock()->setReverseSearch(this, value);
-    }
-    
-    void setParentRoute(SHARED_PTR<RouteSegment> value) {
-        if (!segmentStructure.expired())
-        {
-            segmentStructure.lock()->setParentRoute(this, value);
-        }
-    }
-    
-    void setOpposite(SHARED_PTR<RouteSegment> value) {
-        if (!segmentStructure.expired())
-            segmentStructure.lock()->setOpposite(this, value);
-    }
+	~RouteSegment() {
+		if (!segmentStructure.expired())
+			segmentStructure.lock()->clearData(this);
+	}
+	
+	SHARED_PTR<RouteSegment> getNext() {
+		if (!segmentStructure.expired())
+			return segmentStructure.lock()->getNext(this);
+		return nullptr;
+	}
+	
+	SHARED_PTR<RouteSegment> getNextLoaded() {
+		if (!segmentStructure.expired())
+			return segmentStructure.lock()->getNextLoaded(this);
+		return nullptr;
+	}
+	
+	SHARED_PTR<RouteSegment> getOppositeDirection() {
+		if (!segmentStructure.expired())
+			return segmentStructure.lock()->getOppositeDirection(this);
+		return nullptr;
+	}
+	
+	SHARED_PTR<RouteSegment> getReverseSearch() {
+		if (!segmentStructure.expired())
+			return segmentStructure.lock()->getReverseSearch(this);
+		return nullptr;
+	}
+	
+	SHARED_PTR<RouteSegment> getParentRoute() {
+		if (!segmentStructure.expired())
+			return segmentStructure.lock()->getParentRoute(this);
+		return nullptr;
+	}
+	
+	SHARED_PTR<RouteSegment> getOpposite() {
+		if (!segmentStructure.expired())
+			return segmentStructure.lock()->getOpposite(this);
+		return nullptr;
+	}
+	
+	void setNext(SHARED_PTR<RouteSegment> value) {
+		if (!segmentStructure.expired())
+			segmentStructure.lock()->setNext(this, value);
+	}
+	
+	void setNextLoaded(SHARED_PTR<RouteSegment> value) {
+		if (!segmentStructure.expired())
+			segmentStructure.lock()->setNextLoaded(this, value);
+	}
+	
+	void setOppositeDirection(SHARED_PTR<RouteSegment> value) {
+		if (!segmentStructure.expired())
+			segmentStructure.lock()->setOppositeDirection(this, value);
+	}
+	
+	void setReverseSearch(SHARED_PTR<RouteSegment> value) {
+		if (!segmentStructure.expired())
+			segmentStructure.lock()->setReverseSearch(this, value);
+	}
+	
+	void setParentRoute(SHARED_PTR<RouteSegment> value) {
+		if (!segmentStructure.expired())
+		{
+			segmentStructure.lock()->setParentRoute(this, value);
+		}
+	}
+	
+	void setOpposite(SHARED_PTR<RouteSegment> value) {
+		if (!segmentStructure.expired())
+			segmentStructure.lock()->setOpposite(this, value);
+	}
 };
 
 struct RouteSegmentPoint : RouteSegment {

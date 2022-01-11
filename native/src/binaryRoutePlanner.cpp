@@ -151,8 +151,8 @@ void initQueuesWithStartEnd(RoutingContext* ctx, SHARED_PTR<RouteSegment> start,
 	SHARED_PTR<RouteSegment> endNeg = initRouteSegment(ctx, end, false, true);
 	startPos->setParentRoute(RouteSegment::breakSegment);
 	startNeg->setParentRoute(RouteSegment::breakSegment);
-    endPos->setParentRoute(RouteSegment::breakSegment);
-    endNeg->setParentRoute(RouteSegment::breakSegment);
+	endPos->setParentRoute(RouteSegment::breakSegment);
+	endNeg->setParentRoute(RouteSegment::breakSegment);
 
 	// for start : f(start) = g(start) + h(start) = 0 + h(start) = h(start)
 	if (ctx->config->initialDirection > -180 && ctx->config->initialDirection < 180) {
@@ -213,25 +213,25 @@ bool checkIfGraphIsEmpty(RoutingContext* ctx, bool allowDirection, bool reverseW
 					neg->distanceToEnd = estimatedDist;
 					graphSegments.push(neg);
 				}
-                if (!graphSegments.empty()) {
-                    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "Reiterate point with new start/destination ");
-                    printRoad("Reiterate point ", next);
-                    break;
-                }
+				if (!graphSegments.empty()) {
+					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "Reiterate point with new start/destination ");
+					printRoad("Reiterate point ", next);
+					break;
+				}
 			}
 			pnt->others.shrink_to_fit();
-            if (graphSegments.size() == 0) {
-                OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "Route is not found to selected target point.");
-            }
-            return graphSegments.empty();
+			if (graphSegments.size() == 0) {
+				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "Route is not found to selected target point.");
+			}
+			return graphSegments.empty();
 		}
 	}
-    return false;
+	return false;
 }
 
 bool containsKey(VISITED_MAP& visited, int64_t routePointId) {
 	VISITED_MAP::iterator iterator = visited.find(routePointId);
-    return iterator != visited.end();
+	return iterator != visited.end();
 }
 
 /**
@@ -416,7 +416,7 @@ bool checkViaRestrictions(SHARED_PTR<RouteSegment>& from, SHARED_PTR<RouteSegmen
 }
 
 SHARED_PTR<RouteSegment> getParentDiffId(SHARED_PTR<RouteSegment>& s) {
-    auto res = s;
+	auto res = s;
 	while (res->getParentRouteOrNull() && res->getParentRouteOrNull()->getRoad() &&
 		   res->getParentRouteOrNull()->getRoad()->id == s->getRoad()->id) {
 		res = res->getParentRouteOrNull();
@@ -532,8 +532,8 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 		if (existingSegment) {
 			if (distFromStartPlusSegmentTime > existingSegment->distanceFromStart) {
 				// insert back original segment (test case with large area way)
-                visitedSegments[nextPntId] = existingSegment;
-//				directionAllowed = false;
+				visitedSegments[nextPntId] = existingSegment;
+				// directionAllowed = false;
 				if (TRACE_ROUTING) {
 					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "  >> Already visited");
 				}
@@ -701,7 +701,7 @@ SHARED_PTR<RouteSegment> processIntersections(RoutingContext* ctx, SEGMENTS_QUEU
 			roadIter->getRoad()->getId() == currentSegment->getRoad()->getId()) {
 			nextCurrentSegment = RouteSegment::initRouteSegment(roadIter, currentSegment->isPositive(), ctx->routeSegmentStructure);
 			if (!nextCurrentSegment) {
-                // end of route (-1 or length + 1)
+				// end of route (-1 or length + 1)
 				directionAllowed = false;
 			} else {
 				if (nextCurrentSegment->isSegmentAttachedToStart()) {
@@ -740,7 +740,7 @@ SHARED_PTR<RouteSegment> processIntersections(RoutingContext* ctx, SEGMENTS_QUEU
 
 	// Calculate possible turns to put into priority queue
 	SHARED_PTR<RouteSegment> next = connectedNextSegment;
-    bool hasNext = thereAreRestrictions ? nextIterator != ctx->segmentsToVisitPrescripted.end() : next != nullptr;
+	bool hasNext = thereAreRestrictions ? nextIterator != ctx->segmentsToVisitPrescripted.end() : next != nullptr;
 	while (hasNext) {
 		if (thereAreRestrictions) {
 			next = *nextIterator;
@@ -761,7 +761,7 @@ SHARED_PTR<RouteSegment> processIntersections(RoutingContext* ctx, SEGMENTS_QUEU
 			hasNext = next != nullptr;
 		} else {
 			nextIterator++;
-            hasNext = nextIterator != ctx->segmentsToVisitPrescripted.end();
+			hasNext = nextIterator != ctx->segmentsToVisitPrescripted.end();
 		}
 	}
 	if (nextCurrentSegment == nullptr && directionAllowed) {
@@ -957,7 +957,7 @@ bool processOneRoadIntersection(RoutingContext* ctx, bool reverseWaySearch, SEGM
 		const auto visIt = visitedSegments.find(calculateRoutePointId(next));
 		bool toAdd = true;
 		if (visIt != visitedSegments.end() && visIt->second) {
-            const auto& visitedSeg = visIt->second;
+			const auto& visitedSeg = visIt->second;
 			if (TRACE_ROUTING) {
 				printRoad("  >?", visitedSegments.at(calculateRoutePointId(next)));
 			}
